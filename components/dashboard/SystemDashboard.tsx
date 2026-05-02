@@ -483,6 +483,7 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
     notes: "",
   });
   const [isBusy, setIsBusy] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const companyProfileRef = useRef<HTMLDivElement | null>(null);
 
   const clientById = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients]);
@@ -1359,59 +1360,73 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--app-bg)] text-brand-charcoal">
+    <main className="min-h-screen overflow-x-hidden bg-[var(--app-bg)] text-brand-charcoal">
       <div className="min-h-screen lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
-        <aside className="sticky top-0 z-30 border-b border-brand-border bg-white lg:h-screen lg:border-b-0 lg:border-r">
-          <div className="flex h-full flex-col gap-5 p-4">
-            <div>
-              <div className="flex items-center justify-between gap-2">
+        <aside className="z-30 border-b border-brand-border bg-white lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
+          <div className="flex flex-col gap-4 p-4 lg:h-full lg:gap-5">
+            <div className="flex items-start justify-between gap-2">
+              <div>
                 <div className="text-sm font-bold">ZQX</div>
+                <div className="mt-1 text-xs text-brand-muted">Platform System</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMenuOpen((current) => !current)}
+                  className="focus-ring rounded-md border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-muted lg:hidden"
+                >
+                  {isMobileMenuOpen ? (locale === "es" ? "Cerrar" : "Close") : locale === "es" ? "Menú" : "Menu"}
+                </button>
                 <LocaleSwitcher locale={locale} onChange={setLocale} compact />
               </div>
-              <div className="mt-1 text-xs text-brand-muted">Platform System</div>
             </div>
 
-            {snapshot.user.isZqxAdmin ? (
-              <label className="block text-xs font-semibold text-brand-muted">
-                {t.activeBusiness}
-                <select
-                  value={snapshot.activeBusiness.id}
-                  onChange={(event) => router.push(`/dashboard?businessId=${event.target.value}`)}
-                  className="focus-ring mt-2 w-full rounded-md border border-brand-border bg-white px-3 py-2 text-sm font-medium text-brand-charcoal"
-                >
-                  {businesses.map((business) => (
-                    <option key={business.id} value={business.id}>
-                      {business.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
+            <div className={`${isMobileMenuOpen ? "flex" : "hidden"} flex-col gap-4 lg:flex lg:flex-1`}>
+              {snapshot.user.isZqxAdmin ? (
+                <label className="block text-xs font-semibold text-brand-muted">
+                  {t.activeBusiness}
+                  <select
+                    value={snapshot.activeBusiness.id}
+                    onChange={(event) => router.push(`/dashboard?businessId=${event.target.value}`)}
+                    className="focus-ring mt-2 w-full rounded-md border border-brand-border bg-white px-3 py-2 text-sm font-medium text-brand-charcoal"
+                  >
+                    {businesses.map((business) => (
+                      <option key={business.id} value={business.id}>
+                        {business.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
 
-            <nav className="grid gap-1">
-              {navigation.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setView(item.id)}
-                  className={`focus-ring rounded-md px-3 py-2 text-left text-sm font-semibold ${
-                    view === item.id ? "bg-brand-charcoal text-white" : "text-brand-muted hover:bg-neutral-100 hover:text-brand-charcoal"
-                  }`}
-                >
-                  {item.label}
+              <nav className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-1 lg:overflow-visible lg:pb-0">
+                {navigation.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setView(item.id);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`focus-ring shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm font-semibold lg:w-full ${
+                      view === item.id ? "bg-brand-charcoal text-white" : "bg-white text-brand-muted hover:bg-neutral-100 hover:text-brand-charcoal"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+
+              <div className="rounded-lg border border-brand-border bg-neutral-50 p-3 text-sm lg:mt-auto">
+                <div className="font-semibold">{snapshot.user.name}</div>
+                <div className="mt-1 break-all text-xs text-brand-muted">{snapshot.user.email}</div>
+                <div className="mt-3 inline-flex rounded-full border border-brand-border bg-white px-2 py-1 text-xs font-semibold text-brand-muted">
+                  {snapshot.user.isZqxAdmin ? t.allUsersLabel : snapshot.user.role}
+                </div>
+                <button type="button" onClick={signOut} className="focus-ring mt-3 w-full rounded-md border border-brand-border bg-white px-3 py-2 text-sm font-semibold hover:border-brand-blue">
+                  {t.signOut}
                 </button>
-              ))}
-            </nav>
-
-            <div className="mt-auto rounded-lg border border-brand-border bg-neutral-50 p-3 text-sm">
-              <div className="font-semibold">{snapshot.user.name}</div>
-              <div className="mt-1 break-all text-xs text-brand-muted">{snapshot.user.email}</div>
-              <div className="mt-3 inline-flex rounded-full border border-brand-border bg-white px-2 py-1 text-xs font-semibold text-brand-muted">
-                {snapshot.user.isZqxAdmin ? t.allUsersLabel : snapshot.user.role}
               </div>
-              <button type="button" onClick={signOut} className="focus-ring mt-3 w-full rounded-md border border-brand-border bg-white px-3 py-2 text-sm font-semibold hover:border-brand-blue">
-                {t.signOut}
-              </button>
             </div>
           </div>
         </aside>
@@ -1433,9 +1448,9 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
                     className="h-12 w-24 shrink-0"
                     textClassName="text-base"
                   />
-                  <h1 className="text-2xl font-semibold">{snapshot.activeBusiness.name}</h1>
+                  <h1 className="break-words text-xl font-semibold leading-tight sm:text-2xl">{snapshot.activeBusiness.name}</h1>
                 </div>
-                <p className="mt-1 text-sm text-brand-muted">{primaryModule.label} con {enabledModules.map((module) => module.name).join(", ") || t.noModules}.</p>
+                <p className="mt-1 break-words text-sm text-brand-muted">{primaryModule.label} con {enabledModules.map((module) => module.name).join(", ") || t.noModules}.</p>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -1445,21 +1460,21 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
                     setView("records");
                     setIsClientFormOpen(true);
                   }}
-                  className="focus-ring rounded-md bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-[#0043ce]"
+                  className="focus-ring w-full rounded-md bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-[#0043ce] sm:w-auto"
                 >
                   + {primaryModule.entitySingular}
                 </button>
                 <button
                   type="button"
                   onClick={() => setView("calendar")}
-                  className="focus-ring rounded-md border border-brand-border bg-white px-4 py-2 text-sm font-semibold hover:border-brand-blue"
+                  className="focus-ring w-full rounded-md border border-brand-border bg-white px-4 py-2 text-sm font-semibold hover:border-brand-blue sm:w-auto"
                 >
                   + {primaryModule.appointmentSingular}
                 </button>
                 <button
                   type="button"
                   onClick={() => setView("billing")}
-                  className="focus-ring rounded-md border border-brand-border bg-white px-4 py-2 text-sm font-semibold hover:border-brand-blue"
+                  className="focus-ring w-full rounded-md border border-brand-border bg-white px-4 py-2 text-sm font-semibold hover:border-brand-blue sm:w-auto"
                 >
                   + {t.addCharge}
                 </button>
