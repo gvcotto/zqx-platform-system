@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Universidad Central logo">
+  <defs>
+    <linearGradient id="uni-bg" x1="10" y1="10" x2="118" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#eff6ff" />
+      <stop offset="1" stop-color="#dbeafe" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#uni-bg)" />
+  <path d="M20 46L64 28l44 18l-44 18z" fill="#1d4ed8" />
+  <path d="M32 56v24c0 12 14 20 32 20s32-8 32-20V56" fill="none" stroke="#1e40af" stroke-width="6" stroke-linecap="round" />
+  <circle cx="64" cy="61" r="8" fill="#93c5fd" />
+</svg>

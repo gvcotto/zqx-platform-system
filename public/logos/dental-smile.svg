@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Dental Smile logo">
+  <defs>
+    <linearGradient id="dental-bg" x1="12" y1="12" x2="116" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ecfeff" />
+      <stop offset="1" stop-color="#cffafe" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#dental-bg)" />
+  <path
+    d="M64 20C47 20 32 29 32 48c0 13 6 21 10 33c3 10 5 22 14 22c7 0 10-8 10-16c0-6 2-10 6-10s6 4 6 10c0 8 3 16 10 16c9 0 11-12 14-22c4-12 10-20 10-33c0-19-15-28-32-28c-8 0-12 4-18 4s-10-4-18-4z"
+    fill="#ffffff"
+    stroke="#0891b2"
+    stroke-width="4"
+    stroke-linejoin="round"
+  />
+  <circle cx="50" cy="53" r="4" fill="#0891b2" />
+  <circle cx="78" cy="53" r="4" fill="#0891b2" />
+  <path d="M50 67c4 4 9 6 14 6s10-2 14-6" fill="none" stroke="#0891b2" stroke-width="4" stroke-linecap="round" />
+</svg>
