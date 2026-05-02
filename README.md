@@ -48,6 +48,39 @@ Email/password can also be enabled through Supabase Auth. In local development w
 - `operator`: day-to-day user.
 - `viewer`: read-only user.
 
+## Vercel setup (system.zqxconsulting.com)
+
+Set these Environment Variables in Vercel (`Production`, `Preview`, and `Development` as needed):
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://system.zqxconsulting.com
+NEXT_PUBLIC_SUPABASE_URL=https://jgvvmtiexnpwllzutizf.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
+NEXT_PUBLIC_GOOGLE_HOSTED_DOMAIN=
+ZQX_SYSTEM_AUTH_SECRET=<LONG_RANDOM_SECRET>
+ZQX_SYSTEM_OWNER_EMAIL=gvcotto@zqxconsulting.com
+ZQX_SYSTEM_ADMIN_EMAIL=gvcotto@zqxconsulting.com
+ZQX_SYSTEM_ADMIN_PASSWORD=ZQXdemo2026!
+ZQX_SYSTEM_COOKIE_SECURE=true
+```
+
+Auth providers configuration:
+
+1. Supabase > Authentication > URL Configuration:
+   - Site URL: `https://system.zqxconsulting.com`
+   - Redirect URLs:
+     - `http://localhost:3007/auth/callback`
+     - `https://system.zqxconsulting.com/auth/callback`
+2. Supabase > Authentication > Providers > Google:
+   - Enable Google provider.
+   - Set Google Client ID and Client Secret from Google Cloud.
+3. Google Cloud (OAuth client):
+   - Authorized JavaScript origins:
+     - `http://localhost:3007`
+     - `https://system.zqxconsulting.com`
+   - Authorized redirect URI:
+     - `https://jgvvmtiexnpwllzutizf.supabase.co/auth/v1/callback`
+
 ## MVP Modules
 
 - General Module
