@@ -19,10 +19,6 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "ZQX Platform System",
   description: "Sistema modular para CRM, citas, seguimientos, pagos, empresas y administracion ZQX.",
-  icons: {
-    icon: [{ url: "/logos/zqx.svg", type: "image/svg+xml" }],
-    shortcut: "/logos/zqx.svg",
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
