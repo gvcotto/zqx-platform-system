@@ -91,3 +91,11 @@ Auth providers configuration:
 - Custom Module
 
 The General Module provides shared CRUD for clients, appointments, follow-ups, services, payments, FAQs and chatbot logs. Industry modules change labels, workflows and module configuration per company.
+
+## Change log
+
+### 2026-06-02
+
+- Added a production-side check in the Google login button so the UI does not send users into a dead Supabase OAuth flow when the configured host is unreachable.
+- Documented the current production issue: the Supabase host configured for OAuth does not resolve, so the environment variable must be corrected and the app redeployed.
+- Kept the auth callback target aligned with `https://system.zqxconsulting.com/auth/callback`.

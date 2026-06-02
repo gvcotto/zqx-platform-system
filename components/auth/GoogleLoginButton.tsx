@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getSiteUrl, getSupabaseConfig } from "@/lib/supabase/config";
 import type { Locale } from "@/lib/i18n";
@@ -27,14 +27,44 @@ const copy = {
 export default function GoogleLoginButton({ locale }: GoogleLoginButtonProps) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isReachable, setIsReachable] = useState<boolean | null>(null);
   const config = getSupabaseConfig();
   const hostedDomain = process.env.NEXT_PUBLIC_GOOGLE_HOSTED_DOMAIN?.trim();
   const t = useMemo(() => copy[locale], [locale]);
+
+  useEffect(() => {
+    if (!config.isConfigured || !config.url) {
+      setIsReachable(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 3000);
+
+    fetch(config.url, {
+      method: "GET",
+      mode: "no-cors",
+      signal: controller.signal,
+    })
+      .then(() => setIsReachable(true))
+      .catch(() => setIsReachable(false))
+      .finally(() => window.clearTimeout(timeout));
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [config.isConfigured, config.url]);
 
   async function signIn() {
     setError("");
 
     if (!config.isConfigured) {
+      setError(t.notAvailable);
+      return;
+    }
+
+    if (isReachable === false) {
       setError(t.notAvailable);
       return;
     }
@@ -71,7 +101,7 @@ export default function GoogleLoginButton({ locale }: GoogleLoginButtonProps) {
       <button
         type="button"
         onClick={signIn}
-        disabled={isLoading}
+        disabled={isLoading || isReachable !== true}
         className="focus-ring pressable inline-flex w-full items-center justify-center gap-3 rounded-md border border-brand-border bg-white px-4 py-2 text-sm font-semibold text-brand-charcoal shadow-sm hover:border-brand-blue disabled:cursor-not-allowed disabled:opacity-60"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
@@ -80,8 +110,12 @@ export default function GoogleLoginButton({ locale }: GoogleLoginButtonProps) {
           <path fill="#FBBC05" d="M12 20.5c2.6 0 4.8-.9 6.5-2.4l-3-2.4c-.8.6-1.9 1.1-3.5 1.1c-3.2 0-5.9-2.1-6.9-5.1l-3.2 2.5c1.5 3.8 5.3 6.3 10.1 6.3z" />
           <path fill="#4285F4" d="M21 11.6c0-.6-.1-1-.2-1.4H12v3.9h5.5c-.2 1.1-1 2.7-2.5 3.7l3 2.4c1.7-1.6 3-4 3-7.6z" />
         </svg>
-        {isLoading ? t.opening : t.cta}
+        {isLoading ? t.opening : isReachable === false ? t.notAvailable : t.cta}
       </button>
+
+      {!config.isConfigured || isReachable === false ? (
+        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">{t.notAvailable}</div>
+      ) : null}
 
       {error ? <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">{error}</div> : null}
     </div>
