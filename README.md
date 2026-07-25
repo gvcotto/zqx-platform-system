@@ -54,7 +54,7 @@ Set these Environment Variables in Vercel (`Production`, `Preview`, and `Develop
 
 ```bash
 NEXT_PUBLIC_SITE_URL=https://system.zqxconsulting.com
-NEXT_PUBLIC_SUPABASE_URL=https://jgvvmtiexnpwllzutizf.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://<PROJECT_REF>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
 NEXT_PUBLIC_GOOGLE_HOSTED_DOMAIN=
 ZQX_SYSTEM_AUTH_SECRET=<LONG_RANDOM_SECRET>
@@ -79,7 +79,7 @@ Auth providers configuration:
      - `http://localhost:3007`
      - `https://system.zqxconsulting.com`
    - Authorized redirect URI:
-     - `https://jgvvmtiexnpwllzutizf.supabase.co/auth/v1/callback`
+     - `https://<PROJECT_REF>.supabase.co/auth/v1/callback`
 
 ## MVP Modules
 
@@ -93,6 +93,17 @@ Auth providers configuration:
 The General Module provides shared CRUD for clients, appointments, follow-ups, services, payments, FAQs and chatbot logs. Industry modules change labels, workflows and module configuration per company.
 
 ## Change log
+
+### 2026-07-25
+
+- Removed the automatic browser reachability `fetch` from the Google login button to avoid noisy DNS errors on page load.
+- Added clearer Google/Supabase configuration messages for missing or malformed public Supabase settings.
+- Confirmed the active configured Supabase host `jgvvmtiexnpwllzutizf.supabase.co` does not resolve locally; update `NEXT_PUBLIC_SUPABASE_URL` to the real active Supabase project URL and redeploy.
+- Added root-level analysis documentation under `../zqx_analysis`.
+- Supabase was later reactivated and Google login was confirmed working in production.
+- Added the `Structure` dashboard view to separate ZQX administration, client companies, and company operations before users jump into daily workflows.
+- Grouped the sidebar navigation into Governance, Company operations, and Automation.
+- Added portable local tooling documentation under `../zqx_analysis`; system build was validated from a clean non-OneDrive copy because OneDrive caused local webpack read errors.
 
 ### 2026-06-02
 

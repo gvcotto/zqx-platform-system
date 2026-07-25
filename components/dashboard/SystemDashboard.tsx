@@ -22,7 +22,7 @@ type DashboardProps = {
   snapshot: DashboardSnapshot;
 };
 
-type WorkspaceView = "overview" | "records" | "calendar" | "billing" | "admin" | "assistant";
+type WorkspaceView = "structure" | "overview" | "records" | "calendar" | "billing" | "admin" | "assistant";
 
 type ChatMessage = {
   role: "assistant" | "user";
@@ -167,7 +167,8 @@ const dentalCapabilitiesByLocale: Record<Locale, string[]> = {
 
 const dashboardCopyByLocale = {
   es: {
-    navOverview: "Operación",
+    navOverview: "Operacion",
+    navStructure: "Estructura",
     navCalendar: "Calendario",
     navBilling: "Cobros",
     navAssistant: "Asistente",
@@ -197,6 +198,7 @@ const dashboardCopyByLocale = {
   },
   en: {
     navOverview: "Operations",
+    navStructure: "Structure",
     navCalendar: "Calendar",
     navBilling: "Billing",
     navAssistant: "Assistant",
@@ -373,6 +375,19 @@ function BusinessLogo({
   );
 }
 
+function StructureIcon({ label, tone = "blue" }: { label: string; tone?: "blue" | "green" | "amber" | "slate" }) {
+  const toneClass =
+    tone === "green"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : tone === "amber"
+        ? "border-amber-200 bg-amber-50 text-amber-700"
+        : tone === "slate"
+          ? "border-slate-200 bg-slate-50 text-slate-700"
+          : "border-blue-200 bg-blue-50 text-blue-700";
+
+  return <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-md border text-xs font-black ${toneClass}`}>{label}</span>;
+}
+
 export default function SystemDashboard({ snapshot }: DashboardProps) {
   const router = useRouter();
   const primaryModule = getPrimaryModuleForIndustry(snapshot.activeBusiness.industry);
@@ -391,7 +406,7 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
   const dentalCapabilities = dentalCapabilitiesByLocale[locale];
 
   const [businesses, setBusinesses] = useState(snapshot.businesses);
-  const [view, setView] = useState<WorkspaceView>(snapshot.user.isZqxAdmin ? "admin" : "overview");
+  const [view, setView] = useState<WorkspaceView>(snapshot.user.isZqxAdmin ? "structure" : "overview");
   const [clients, setClients] = useState(snapshot.clients);
   const [appointments, setAppointments] = useState(sortAppointments(snapshot.appointments));
   const [payments, setPayments] = useState(snapshot.payments);
@@ -612,6 +627,11 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
     () => (snapshot.user.isZqxAdmin ? users : users.filter((user) => user.business_id === selectedBusiness.id)),
     [selectedBusiness.id, snapshot.user.isZqxAdmin, users],
   );
+  const platformOwners = useMemo(() => users.filter((user) => user.role === "zqx_owner"), [users]);
+  const businessAdminUsers = useMemo(() => users.filter((user) => user.role === "business_admin"), [users]);
+  const selectedBusinessClients = snapshot.user.isZqxAdmin ? clients : clients.filter((client) => client.business_id === selectedBusiness.id);
+  const selectedBusinessAppointments = snapshot.user.isZqxAdmin ? appointments : appointments.filter((appointment) => appointment.business_id === selectedBusiness.id);
+  const selectedBusinessPayments = snapshot.user.isZqxAdmin ? payments : payments.filter((payment) => payment.business_id === selectedBusiness.id);
   const showAdminOverview = !isBusinessFormOpen && !showCompanyProfile;
   const selectedBusinessModuleIds = useMemo(
     () => new Set(allBusinessModules.filter((module) => module.business_id === selectedBusiness.id && module.enabled).map((module) => module.module_id)),
@@ -665,13 +685,23 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
     { label: t.metricsPaidRevenue, value: money(paidRevenue, locale), helper: noShowCount ? `${noShowCount} no-shows` : t.metricsNoShowsNone },
   ];
 
-  const navigation: Array<{ id: WorkspaceView; label: string }> = [
+  const governanceNavigation: Array<{ id: WorkspaceView; label: string }> = [
+    { id: "structure", label: t.navStructure },
+    ...(snapshot.user.isZqxAdmin ? [{ id: "admin" as const, label: t.navAdmin }] : []),
+  ];
+  const operationsNavigation: Array<{ id: WorkspaceView; label: string }> = [
     { id: "overview", label: t.navOverview },
     { id: "records", label: primaryModule.entityLabel },
     { id: "calendar", label: t.navCalendar },
     { id: "billing", label: t.navBilling },
-    ...(snapshot.user.isZqxAdmin ? [{ id: "admin" as const, label: t.navAdmin }] : []),
+  ];
+  const automationNavigation: Array<{ id: WorkspaceView; label: string }> = [
     { id: "assistant", label: t.navAssistant },
+  ];
+  const navigationSections = [
+    { label: locale === "es" ? "Gobierno" : "Governance", items: governanceNavigation },
+    { label: locale === "es" ? "Operacion empresa" : "Company operations", items: operationsNavigation },
+    { label: locale === "es" ? "Automatizacion" : "Automation", items: automationNavigation },
   ];
 
   useEffect(() => {
@@ -1399,21 +1429,28 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
                 </label>
               ) : null}
 
-              <nav className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-1 lg:overflow-visible lg:pb-0">
-                {navigation.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setView(item.id);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`focus-ring shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm font-semibold lg:w-full ${
-                      view === item.id ? "bg-brand-charcoal text-white" : "bg-white text-brand-muted hover:bg-neutral-100 hover:text-brand-charcoal"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
+              <nav className="grid gap-4 pb-1">
+                {navigationSections.map((section) => (
+                  <div key={section.label}>
+                    <div className="mb-1 px-3 text-[11px] font-bold uppercase text-brand-muted">{section.label}</div>
+                    <div className="flex gap-2 overflow-x-auto lg:grid lg:gap-1 lg:overflow-visible">
+                      {section.items.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setView(item.id);
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className={`focus-ring shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm font-semibold lg:w-full ${
+                            view === item.id ? "bg-brand-charcoal text-white" : "bg-white text-brand-muted hover:bg-neutral-100 hover:text-brand-charcoal"
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </nav>
 
@@ -1492,6 +1529,227 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
                 </article>
               ))}
             </section>
+
+            {view === "structure" ? (
+              <div className="mt-5 space-y-4">
+                <section className="surface-panel rounded-lg border border-brand-border p-5">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <h2 className="text-xl font-semibold">{locale === "es" ? "Estructura de ZQX" : "ZQX structure"}</h2>
+                      <p className="mt-1 max-w-3xl text-sm leading-6 text-brand-muted">
+                        {locale === "es"
+                          ? "Mapa visual de quien administra la plataforma, que empresas estan conectadas y como baja la operacion hacia clientes, agenda y cobros."
+                          : "Visual map of who manages the platform, which companies are connected, and how operations flow into clients, calendar, and billing."}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setView(snapshot.user.isZqxAdmin ? "admin" : "records")}
+                      className="focus-ring rounded-md border border-brand-border bg-white px-4 py-2 text-sm font-semibold hover:border-brand-blue"
+                    >
+                      {snapshot.user.isZqxAdmin ? (locale === "es" ? "Gestionar accesos" : "Manage access") : locale === "es" ? "Ver clientes" : "View clients"}
+                    </button>
+                  </div>
+
+                  <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+                    <div className="rounded-lg border border-brand-border bg-white p-4">
+                      <div className="flex items-center gap-3">
+                        <StructureIcon label="ZQX" tone="blue" />
+                        <div>
+                          <h3 className="font-semibold">{locale === "es" ? "Mapa plataforma ZQX" : "ZQX platform map"}</h3>
+                          <p className="mt-1 text-xs text-brand-muted">
+                            {locale === "es" ? "Superusuario, administradores y empresas administradas." : "Super user, administrators, and managed companies."}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 grid gap-3">
+                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                          <div className="flex items-center gap-3">
+                            <StructureIcon label="SU" tone="blue" />
+                            <div>
+                              <div className="text-sm font-semibold">{locale === "es" ? "Superusuario ZQX" : "ZQX super user"}</div>
+                              <div className="mt-1 text-xs text-brand-muted">
+                                {platformOwners[0]?.email ?? snapshot.user.email}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid place-items-center text-xs font-semibold text-brand-muted">v</div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div className="rounded-lg border border-brand-border bg-neutral-50 p-3">
+                            <div className="flex items-center gap-3">
+                              <StructureIcon label="ZA" tone="slate" />
+                              <div>
+                                <div className="text-sm font-semibold">{locale === "es" ? "Admins ZQX" : "ZQX admins"}</div>
+                                <div className="mt-1 text-xs text-brand-muted">
+                                  {businessAdminUsers.length} {locale === "es" ? "usuarios admin" : "admin users"}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-3 space-y-2">
+                              {businessAdminUsers.slice(0, 4).map((user) => (
+                                <div key={`admin-map-${user.id}`} className="rounded-md border border-brand-border bg-white px-3 py-2 text-xs">
+                                  <span className="font-semibold">{user.name}</span>
+                                  <span className="block truncate text-brand-muted">{businessById.get(user.business_id)?.name ?? (locale === "es" ? "Sin empresa asignada" : "Unassigned")}</span>
+                                </div>
+                              ))}
+                              {!businessAdminUsers.length ? (
+                                <div className="rounded-md border border-brand-border bg-white px-3 py-2 text-xs text-brand-muted">
+                                  {locale === "es" ? "Aun no hay admins ZQX/empresa configurados." : "No ZQX/company admins configured yet."}
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <div className="rounded-lg border border-brand-border bg-neutral-50 p-3">
+                            <div className="flex items-center gap-3">
+                              <StructureIcon label="CO" tone="green" />
+                              <div>
+                                <div className="text-sm font-semibold">{locale === "es" ? "Empresas cliente" : "Client companies"}</div>
+                                <div className="mt-1 text-xs text-brand-muted">
+                                  {businesses.length} {locale === "es" ? "empresas conectadas" : "connected companies"}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-3 grid gap-2">
+                              {businesses.slice(0, 5).map((business) => {
+                                const adminCount = users.filter((user) => user.business_id === business.id && user.role === "business_admin").length;
+                                return (
+                                  <button
+                                    key={`business-map-${business.id}`}
+                                    type="button"
+                                    onClick={() => router.push(`/dashboard?businessId=${business.id}`)}
+                                    className="focus-ring rounded-md border border-brand-border bg-white px-3 py-2 text-left text-xs hover:border-brand-blue"
+                                  >
+                                    <span className="block font-semibold">{business.name}</span>
+                                    <span className="text-brand-muted">
+                                      {adminCount} admin | {industryLabels[business.industry]}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-brand-border bg-white p-4">
+                      <div className="flex items-center gap-3">
+                        <StructureIcon label="APP" tone="green" />
+                        <div>
+                          <h3 className="font-semibold">{locale === "es" ? "Mapa empresa y clientes" : "Company and client map"}</h3>
+                          <p className="mt-1 text-xs text-brand-muted">
+                            {locale === "es" ? "Workspace activo conectado a usuarios, clientes, agenda, cobros y asistente." : "Active workspace connected to users, clients, calendar, billing, and assistant."}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                        <div className="flex items-center gap-3">
+                          <BusinessLogo
+                            name={snapshot.activeBusiness.name}
+                            logoUrl={businessLogoUrl(snapshot.activeBusiness.slug, snapshot.activeBusiness.logo_url)}
+                            className="h-10 w-20 shrink-0"
+                            textClassName="text-sm"
+                          />
+                          <div>
+                            <div className="text-sm font-semibold">{snapshot.activeBusiness.name}</div>
+                            <div className="mt-1 text-xs text-brand-muted">{industryLabels[snapshot.activeBusiness.industry]} | {snapshot.activeBusiness.status}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid place-items-center py-2 text-xs font-semibold text-brand-muted">v</div>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-lg border border-brand-border bg-neutral-50 p-3">
+                          <div className="flex items-center gap-3">
+                            <StructureIcon label="US" tone="slate" />
+                            <div>
+                              <div className="text-sm font-semibold">{locale === "es" ? "Usuarios de empresa" : "Company users"}</div>
+                              <div className="mt-1 text-xs text-brand-muted">
+                                {activeBusinessUsers.length} {locale === "es" ? "usuarios activos o invitados" : "active or invited users"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-brand-border bg-neutral-50 p-3">
+                          <div className="flex items-center gap-3">
+                            <StructureIcon label="API" tone="amber" />
+                            <div>
+                              <div className="text-sm font-semibold">Next.js APIs</div>
+                              <div className="mt-1 text-xs text-brand-muted">/api/records, /api/chatbot, /auth/callback</div>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setView("records")}
+                          className="focus-ring rounded-lg border border-brand-border bg-white p-3 text-left hover:border-brand-blue"
+                        >
+                          <div className="flex items-center gap-3">
+                            <StructureIcon label="CL" tone="green" />
+                            <div>
+                              <div className="text-sm font-semibold">{primaryModule.entityLabel}</div>
+                              <div className="mt-1 text-xs text-brand-muted">
+                                {selectedBusinessClients.length} {locale === "es" ? "registros del workspace" : "workspace records"}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setView("calendar")}
+                          className="focus-ring rounded-lg border border-brand-border bg-white p-3 text-left hover:border-brand-blue"
+                        >
+                          <div className="flex items-center gap-3">
+                            <StructureIcon label="CA" tone="blue" />
+                            <div>
+                              <div className="text-sm font-semibold">{primaryModule.appointmentLabel}</div>
+                              <div className="mt-1 text-xs text-brand-muted">
+                                {selectedBusinessAppointments.length} {locale === "es" ? "citas/reuniones" : "appointments/meetings"}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setView("billing")}
+                          className="focus-ring rounded-lg border border-brand-border bg-white p-3 text-left hover:border-brand-blue"
+                        >
+                          <div className="flex items-center gap-3">
+                            <StructureIcon label="BI" tone="amber" />
+                            <div>
+                              <div className="text-sm font-semibold">{locale === "es" ? "Cobros y saldos" : "Billing and balances"}</div>
+                              <div className="mt-1 text-xs text-brand-muted">
+                                {selectedBusinessPayments.length} {locale === "es" ? "movimientos" : "payment records"}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setView("assistant")}
+                          className="focus-ring rounded-lg border border-brand-border bg-white p-3 text-left hover:border-brand-blue"
+                        >
+                          <div className="flex items-center gap-3">
+                            <StructureIcon label="AI" tone="blue" />
+                            <div>
+                              <div className="text-sm font-semibold">{locale === "es" ? "Asistente e intake" : "Assistant and intake"}</div>
+                              <div className="mt-1 text-xs text-brand-muted">{locale === "es" ? "FAQs, leads y citas" : "FAQs, leads, and appointments"}</div>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            ) : null}
 
             {view === "overview" ? (
               <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
