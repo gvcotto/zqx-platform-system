@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   const email = body.email?.trim().toLowerCase() ?? "";
   const password = body.password ?? "";
-  const validation = validateLocalPasswordLogin(email, password);
+  const validation = await validateLocalPasswordLogin(email, password);
 
   if (!validation.ok || !validation.user) {
     return NextResponse.json({ error: validation.reason ?? "Email o contraseña inválida." }, { status: 401 });

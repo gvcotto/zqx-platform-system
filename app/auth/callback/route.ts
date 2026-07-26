@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createRecord, listRecords, updateRecord } from "@/lib/core/crud";
+import { createRecordAsync, listRecordsAsync, updateRecordAsync } from "@/lib/core/data";
 import { ZQX_BUSINESS_ID, type UserRecord } from "@/lib/core/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -9,21 +9,21 @@ function resolveDefaultRole(email: string): UserRecord["role"] {
   return email === ownerEmail ? "zqx_owner" : "viewer";
 }
 
-function provisionSystemUser(email: string, name?: string) {
+async function provisionSystemUser(email: string, name?: string) {
   const normalizedEmail = email.trim().toLowerCase();
-  const existing = listRecords("users").find((record) => record.email.toLowerCase() === normalizedEmail);
+  const existing = (await listRecordsAsync("users")).find((record) => record.email.toLowerCase() === normalizedEmail);
   if (existing) {
     if (existing.role !== "zqx_owner" && existing.status === "invited" && existing.business_id === ZQX_BUSINESS_ID) {
-      updateRecord("users", existing.id, { business_id: "", auth_source: existing.auth_source ?? "google" });
+      await updateRecordAsync("users", existing.id, { auth_source: existing.auth_source ?? "google" });
     } else if (!existing.auth_source) {
-      updateRecord("users", existing.id, { auth_source: "google" });
+      await updateRecordAsync("users", existing.id, { auth_source: "google" });
     }
     return;
   }
 
   const role = resolveDefaultRole(normalizedEmail);
-  createRecord("users", {
-    business_id: role === "zqx_owner" ? ZQX_BUSINESS_ID : "",
+  await createRecordAsync("users", {
+    business_id: ZQX_BUSINESS_ID,
     email: normalizedEmail,
     name: (name ?? normalizedEmail).trim(),
     role,
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         } = await supabase.auth.getUser();
 
         if (user?.email) {
-          provisionSystemUser(user.email, user.user_metadata?.full_name ?? user.user_metadata?.name ?? undefined);
+          await provisionSystemUser(user.email, user.user_metadata?.full_name ?? user.user_metadata?.name ?? undefined);
         }
       }
     }

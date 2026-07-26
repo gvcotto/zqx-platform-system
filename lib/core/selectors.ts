@@ -1,5 +1,18 @@
-import { listRecords } from "@/lib/core/crud";
-import { DEMO_BUSINESS_ID, ZQX_BUSINESS_ID, type BusinessRecord, type ModuleRecord, type UserRecord } from "@/lib/core/types";
+import { listRecordsAsync } from "@/lib/core/data";
+import {
+  DEMO_BUSINESS_ID,
+  ZQX_BUSINESS_ID,
+  type AppointmentRecord,
+  type BusinessModuleRecord,
+  type BusinessRecord,
+  type ClientRecord,
+  type FaqRecord,
+  type FollowupRecord,
+  type ModuleRecord,
+  type PaymentRecord,
+  type ServiceRecord,
+  type UserRecord,
+} from "@/lib/core/types";
 
 const ownerEmail = (process.env.ZQX_SYSTEM_OWNER_EMAIL ?? "gvcotto@zqxconsulting.com").trim().toLowerCase();
 
@@ -24,16 +37,16 @@ export type DashboardSnapshot = {
   activeBusiness: BusinessRecord;
   enabledModules: ModuleRecord[];
   modules: ModuleRecord[];
-  businessModules: ReturnType<typeof listRecords<"business_modules">>;
-  allBusinessModules: ReturnType<typeof listRecords<"business_modules">>;
+  businessModules: BusinessModuleRecord[];
+  allBusinessModules: BusinessModuleRecord[];
   users: UserRecord[];
   allUsers: UserRecord[];
-  clients: ReturnType<typeof listRecords<"clients">>;
-  appointments: ReturnType<typeof listRecords<"appointments">>;
-  followups: ReturnType<typeof listRecords<"followups">>;
-  services: ReturnType<typeof listRecords<"services">>;
-  payments: ReturnType<typeof listRecords<"payments">>;
-  faqs: ReturnType<typeof listRecords<"faqs">>;
+  clients: ClientRecord[];
+  appointments: AppointmentRecord[];
+  followups: FollowupRecord[];
+  services: ServiceRecord[];
+  payments: PaymentRecord[];
+  faqs: FaqRecord[];
   metrics: {
     clients: number;
     upcomingAppointments: number;
@@ -43,14 +56,14 @@ export type DashboardSnapshot = {
   };
 };
 
-function findUserProfile(email?: string | null) {
+async function findUserProfile(email?: string | null) {
   const normalizedEmail = (email ?? "").trim().toLowerCase();
-  const users = listRecords("users");
+  const users = await listRecordsAsync("users");
   return users.find((user) => user.email.toLowerCase() === normalizedEmail);
 }
 
-export function getSystemUserAccess(email?: string | null, name?: string | null): SystemUserAccess {
-  const profile = findUserProfile(email);
+export async function getSystemUserAccess(email?: string | null, name?: string | null): Promise<SystemUserAccess> {
+  const profile = await findUserProfile(email);
   const normalizedEmail = (email ?? ownerEmail).trim().toLowerCase();
 
   if (profile) {
@@ -92,27 +105,28 @@ export function getSystemUserAccess(email?: string | null, name?: string | null)
   };
 }
 
-export function getSystemUser(email?: string | null, name?: string | null): SystemUser | null {
-  return getSystemUserAccess(email, name).user;
+export async function getSystemUser(email?: string | null, name?: string | null): Promise<SystemUser | null> {
+  return (await getSystemUserAccess(email, name)).user;
 }
 
-export function getDashboardSnapshot(user: SystemUser, requestedBusinessId?: string | null): DashboardSnapshot {
-  const businesses = listRecords("businesses");
-  const modules = listRecords("modules");
+export async function getDashboardSnapshot(user: SystemUser, requestedBusinessId?: string | null): Promise<DashboardSnapshot> {
+  const [businesses, modules] = await Promise.all([listRecordsAsync("businesses"), listRecordsAsync("modules")]);
   const businessId = user.isZqxAdmin && requestedBusinessId ? requestedBusinessId : user.businessId;
   const activeBusiness = businesses.find((business) => business.id === businessId) ?? businesses.find((business) => business.id === DEMO_BUSINESS_ID) ?? businesses[0];
-  const businessModules = listRecords("business_modules", { business_id: activeBusiness.id, enabled: true });
-  const allBusinessModules = listRecords("business_modules", { business_id: activeBusiness.id });
-  const platformBusinessModules = user.isZqxAdmin ? listRecords("business_modules") : allBusinessModules;
+  const [businessModules, allBusinessModules, platformBusinessModules, users, allPlatformUsers, clients, appointments, followups, services, payments, faqs] = await Promise.all([
+    listRecordsAsync("business_modules", { business_id: activeBusiness.id, enabled: true }),
+    listRecordsAsync("business_modules", { business_id: activeBusiness.id }),
+    user.isZqxAdmin ? listRecordsAsync("business_modules") : listRecordsAsync("business_modules", { business_id: activeBusiness.id }),
+    listRecordsAsync("users", { business_id: activeBusiness.id }),
+    user.isZqxAdmin ? listRecordsAsync("users") : listRecordsAsync("users", { business_id: activeBusiness.id }),
+    listRecordsAsync("clients", { business_id: activeBusiness.id }),
+    listRecordsAsync("appointments", { business_id: activeBusiness.id }),
+    listRecordsAsync("followups", { business_id: activeBusiness.id }),
+    listRecordsAsync("services", { business_id: activeBusiness.id }),
+    listRecordsAsync("payments", { business_id: activeBusiness.id }),
+    listRecordsAsync("faqs", { business_id: activeBusiness.id }),
+  ]);
   const enabledModules = modules.filter((module) => businessModules.some((businessModule) => businessModule.module_id === module.id));
-  const users = listRecords("users", { business_id: activeBusiness.id });
-  const allUsers = user.isZqxAdmin ? listRecords("users") : users;
-  const clients = listRecords("clients", { business_id: activeBusiness.id });
-  const appointments = listRecords("appointments", { business_id: activeBusiness.id });
-  const followups = listRecords("followups", { business_id: activeBusiness.id });
-  const services = listRecords("services", { business_id: activeBusiness.id });
-  const payments = listRecords("payments", { business_id: activeBusiness.id });
-  const faqs = listRecords("faqs", { business_id: activeBusiness.id });
 
   return {
     user,
@@ -123,7 +137,7 @@ export function getDashboardSnapshot(user: SystemUser, requestedBusinessId?: str
     businessModules: allBusinessModules,
     allBusinessModules: platformBusinessModules,
     users,
-    allUsers,
+    allUsers: allPlatformUsers,
     clients,
     appointments,
     followups,

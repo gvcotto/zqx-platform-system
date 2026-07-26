@@ -10,7 +10,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const user = await requireSystemUser();
   const query = searchParams ? await searchParams : {};
   const businessParam = Array.isArray(query.businessId) ? query.businessId[0] : query.businessId;
-  const snapshot = getDashboardSnapshot(user, businessParam);
+  const snapshot = await getDashboardSnapshot(user, businessParam);
 
   return <SystemDashboard snapshot={snapshot} />;
 }

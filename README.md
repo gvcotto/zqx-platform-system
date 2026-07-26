@@ -31,6 +31,7 @@ NEXT_PUBLIC_SITE_URL="https://system.zqxconsulting.com"
 NEXT_PUBLIC_SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY"
 NEXT_PUBLIC_GOOGLE_HOSTED_DOMAIN=""
+ZQX_DATA_BACKEND="memory"
 ZQX_SYSTEM_OWNER_EMAIL="gvcotto@zqxconsulting.com"
 ```
 
@@ -62,6 +63,7 @@ ZQX_SYSTEM_OWNER_EMAIL=gvcotto@zqxconsulting.com
 ZQX_SYSTEM_ADMIN_EMAIL=gvcotto@zqxconsulting.com
 ZQX_SYSTEM_ADMIN_PASSWORD=ZQXdemo2026!
 ZQX_SYSTEM_COOKIE_SECURE=true
+ZQX_DATA_BACKEND=memory
 ```
 
 Auth providers configuration:
@@ -88,9 +90,17 @@ Auth providers configuration:
 - Medical Module
 - University Module
 - Consulting Module
+- Restaurant Module
 - Custom Module
 
 The General Module provides shared CRUD for clients, appointments, follow-ups, services, payments, FAQs and chatbot logs. Industry modules change labels, workflows and module configuration per company.
+
+## Docs
+
+- `docs/architecture-map.es-en.md`
+- `docs/supabase-crud-rls-phase1.md`
+- `docs/tutorial-zqx-admins.md`
+- `docs/tutorial-client-companies.md`
 
 ## Change log
 
@@ -104,6 +114,8 @@ The General Module provides shared CRUD for clients, appointments, follow-ups, s
 - Added the `Structure` dashboard view to separate ZQX administration, client companies, and company operations before users jump into daily workflows.
 - Grouped the sidebar navigation into Governance, Company operations, and Automation.
 - Added portable local tooling documentation under `../zqx_analysis`; system build was validated from a clean non-OneDrive copy because OneDrive caused local webpack read errors.
+- Added the first Supabase CRUD/RLS phase behind `ZQX_DATA_BACKEND=supabase`, with fallback to memory while migration is validated.
+- Added docs for Supabase activation and tutorials for ZQX admins and client-company users.
 
 ### 2026-06-02
 

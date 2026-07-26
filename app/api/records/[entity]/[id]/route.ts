@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentSystemUser } from "@/lib/auth";
-import { deleteRecord, getRecord, isEntity, updateRecord } from "@/lib/core/crud";
+import { canReadRecord, canWriteEntity, scopedUpdate } from "@/lib/core/access";
+import { isEntity } from "@/lib/core/crud";
+import { deleteRecordAsync, getRecordAsync, updateRecordAsync } from "@/lib/core/data";
 import type { Entity, RecordUpdate } from "@/lib/core/types";
 
 type RouteContext = {
@@ -14,9 +16,10 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   if (!isEntity(entity)) return NextResponse.json({ error: "Invalid entity." }, { status: 404 });
 
-  const record = getRecord(entity, id);
+  const record = await getRecordAsync(entity, id);
 
   if (!record) return NextResponse.json({ error: "Not found." }, { status: 404 });
+  if (!canReadRecord(user, entity, record)) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   return NextResponse.json({ record });
 }
@@ -27,6 +30,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   if (!isEntity(entity)) return NextResponse.json({ error: "Invalid entity." }, { status: 404 });
+  if (!canWriteEntity(user, entity)) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+
+  const existing = await getRecordAsync(entity, id);
+
+  if (!existing) return NextResponse.json({ error: "Not found." }, { status: 404 });
+  if (!canReadRecord(user, entity, existing)) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   let body: unknown;
 
@@ -36,7 +45,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Invalid body." }, { status: 400 });
   }
 
-  const record = updateRecord(entity, id, body as RecordUpdate<Entity>);
+  const record = await updateRecordAsync(entity, id, scopedUpdate(user, entity, body as RecordUpdate<Entity>));
 
   if (!record) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
@@ -49,16 +58,22 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 
   if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   if (!isEntity(entity)) return NextResponse.json({ error: "Invalid entity." }, { status: 404 });
+  if (!canWriteEntity(user, entity)) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+
+  const existing = await getRecordAsync(entity, id);
+
+  if (!existing) return NextResponse.json({ error: "Not found." }, { status: 404 });
+  if (!canReadRecord(user, entity, existing)) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   if (entity === "users") {
-    const record = getRecord("users", id);
+    const record = await getRecordAsync("users", id);
     if (!record) return NextResponse.json({ error: "Not found." }, { status: 404 });
     if (record.role === "zqx_owner") {
       return NextResponse.json({ error: "Owner account cannot be deleted." }, { status: 403 });
     }
   }
 
-  const deleted = deleteRecord(entity, id);
+  const deleted = await deleteRecordAsync(entity, id);
 
   if (!deleted) return NextResponse.json({ error: "Not found." }, { status: 404 });
 

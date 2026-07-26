@@ -14,7 +14,7 @@ export async function getCurrentSystemAccess(): Promise<AccessResult> {
   const localSession = await getLocalSessionFromCookies();
 
   if (localSession) {
-    const access = getSystemUserAccess(localSession.email, localSession.name);
+    const access = await getSystemUserAccess(localSession.email, localSession.name);
     return { user: access.user, reason: access.state === "active" ? "unauthenticated" : access.state };
   }
 
@@ -30,7 +30,7 @@ export async function getCurrentSystemAccess(): Promise<AccessResult> {
 
   if (!user?.email) return { user: null, reason: "unauthenticated" };
 
-  const access = getSystemUserAccess(user.email, user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email);
+  const access = await getSystemUserAccess(user.email, user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email);
   return { user: access.user, reason: access.state === "active" ? "unauthenticated" : access.state };
 }
 

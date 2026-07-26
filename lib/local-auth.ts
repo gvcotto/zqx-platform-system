@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
-import { listRecords } from "@/lib/core/crud";
+import { listRecordsAsync } from "@/lib/core/data";
 
 export const LOCAL_SESSION_COOKIE = "zqx_system_session";
 const SESSION_MAX_AGE = 60 * 60 * 8;
@@ -59,7 +59,7 @@ function safeEqual(left: string, right: string) {
   return crypto.timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-export function validateLocalPasswordLogin(email: string, password: string) {
+export async function validateLocalPasswordLogin(email: string, password: string) {
   const normalizedEmail = email.trim().toLowerCase();
   const configuredEmail = process.env.ZQX_SYSTEM_ADMIN_EMAIL?.trim().toLowerCase();
   const configuredPassword = process.env.ZQX_SYSTEM_ADMIN_PASSWORD;
@@ -71,7 +71,7 @@ export function validateLocalPasswordLogin(email: string, password: string) {
           password: configuredPassword,
         }
       : null;
-  const recordUser = listRecords("users").find((item) => item.email.toLowerCase() === normalizedEmail && item.status === "active");
+  const recordUser = (await listRecordsAsync("users")).find((item) => item.email.toLowerCase() === normalizedEmail && item.status === "active");
   const storedUser = recordUser?.temporary_password
     ? {
         email: recordUser.email,

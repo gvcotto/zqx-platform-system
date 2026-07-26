@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentSystemUser } from "@/lib/auth";
-import { createRecord, listRecords } from "@/lib/core/crud";
+import { createRecordAsync, listRecordsAsync } from "@/lib/core/data";
 import { isLocale, type Locale } from "@/lib/i18n";
 
 type ChatPayload = {
@@ -74,11 +74,10 @@ export async function POST(request: NextRequest) {
 
   const locale: Locale = isLocale(body.locale) ? body.locale : "es";
   const t = copy[locale];
-  const businessId = body.businessId ?? user.businessId;
+  const businessId = user.isZqxAdmin ? body.businessId ?? user.businessId : user.businessId;
   const message = body.message?.trim() ?? "";
   const lead = body.lead ?? {};
-  const faqs = listRecords("faqs", { business_id: businessId });
-  const services = listRecords("services", { business_id: businessId });
+  const [faqs, services] = await Promise.all([listRecordsAsync("faqs", { business_id: businessId }), listRecordsAsync("services", { business_id: businessId })]);
   const matchedFaq = faqs.find((faq) => {
     const text = normalize(`${faq.question} ${faq.tags.join(" ")}`);
     return normalize(message)
@@ -107,7 +106,7 @@ export async function POST(request: NextRequest) {
       scheduledAt.setDate(scheduledAt.getDate() + 2);
       scheduledAt.setHours(15, 0, 0, 0);
 
-      createdClient = createRecord("clients", {
+      createdClient = await createRecordAsync("clients", {
         business_id: businessId,
         name: lead.name ?? t.newContact,
         type: "person",
@@ -118,7 +117,7 @@ export async function POST(request: NextRequest) {
         notes: t.createdByChatbot,
       });
 
-      createdAppointment = createRecord("appointments", {
+      createdAppointment = await createRecordAsync("appointments", {
         business_id: businessId,
         client_id: createdClient.id,
         service_id: service.id,
@@ -133,7 +132,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  createRecord("chatbot_logs", {
+  await createRecordAsync("chatbot_logs", {
     business_id: businessId,
     user_email: user.email,
     visitor_name: lead.name,
