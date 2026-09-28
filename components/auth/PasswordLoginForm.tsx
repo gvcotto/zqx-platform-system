@@ -89,19 +89,8 @@ export default function PasswordLoginForm({ locale }: PasswordLoginFormProps) {
     setIsLoading(true);
 
     try {
-      try {
-        await signInWithLocalPassword();
-      } catch (localSignInError) {
-        if (!config.isConfigured) {
-          throw localSignInError;
-        }
-
-        try {
-          await signInWithSupabasePassword();
-        } catch {
-          throw localSignInError;
-        }
-      }
+      if (config.isConfigured) await signInWithSupabasePassword();
+      else await signInWithLocalPassword();
     } catch (signInError) {
       setError(signInError instanceof Error ? mapServerError(signInError.message) : t.invalidLogin);
     } finally {

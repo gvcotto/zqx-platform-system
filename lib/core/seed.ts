@@ -63,8 +63,7 @@ export const seedRecords: Records = {
       name: "G. V. Cotto",
       role: "zqx_owner",
       status: "active",
-      temporary_password: "ZQXdemo2026!",
-      auth_source: "local",
+      auth_source: "google",
     },
     {
       id: "usr-dental-admin",
@@ -75,8 +74,7 @@ export const seedRecords: Records = {
       name: "Dental Smile Admin",
       role: "business_admin",
       status: "active",
-      temporary_password: "DemoDental2026!",
-      auth_source: "local",
+      auth_source: "google",
     },
     {
       id: "usr-university-admin",
@@ -87,8 +85,7 @@ export const seedRecords: Records = {
       name: "Universidad Central Admin",
       role: "business_admin",
       status: "active",
-      temporary_password: "DemoUniversity2026!",
-      auth_source: "local",
+      auth_source: "google",
     },
     {
       id: "usr-food-admin",
@@ -99,8 +96,7 @@ export const seedRecords: Records = {
       name: "Mesa Central Admin",
       role: "business_admin",
       status: "active",
-      temporary_password: "DemoFood2026!",
-      auth_source: "local",
+      auth_source: "google",
     },
   ],
   modules: [

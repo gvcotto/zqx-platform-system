@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentSystemUser } from "@/lib/auth";
 import { createRecordAsync, listRecordsAsync } from "@/lib/core/data";
 import { isLocale, type Locale } from "@/lib/i18n";
+import { z } from "zod";
+import { readJsonBody, toApiErrorResponse } from "@/lib/api/request";
 
 type ChatPayload = {
   businessId?: string;
@@ -15,6 +17,19 @@ type ChatPayload = {
   };
   createRecords?: boolean;
 };
+
+const chatPayloadSchema = z.object({
+  businessId: z.string().trim().min(1).max(120).optional(),
+  message: z.string().trim().max(2000).optional(),
+  locale: z.string().max(5).optional(),
+  lead: z.object({
+    name: z.string().trim().max(200).optional(),
+    phone: z.string().trim().max(50).optional(),
+    email: z.string().trim().email().max(320).optional(),
+    serviceInterest: z.string().trim().max(300).optional(),
+  }).strict().optional(),
+  createRecords: z.boolean().optional(),
+}).strict();
 
 const copy = {
   es: {
@@ -65,11 +80,10 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
   let body: ChatPayload;
-
   try {
-    body = (await request.json()) as ChatPayload;
-  } catch {
-    return NextResponse.json({ error: copy.es.invalidBody }, { status: 400 });
+    body = chatPayloadSchema.parse(await readJsonBody(request));
+  } catch (error) {
+    return toApiErrorResponse(error);
   }
 
   const locale: Locale = isLocale(body.locale) ? body.locale : "es";

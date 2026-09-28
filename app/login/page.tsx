@@ -188,6 +188,8 @@ export default function LoginPage() {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const access = params.get("access");
+    const oauthFailure = params.get("oauth_error");
+    if (oauthFailure) setOauthError(oauthFailure.replaceAll("_", " "));
     if (access === "invited" || access === "disabled" || access === "not_found") {
       setAccessCode(access);
       return;

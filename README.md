@@ -17,12 +17,9 @@ npm run dev -- -p 3007
 
 Open `http://localhost:3007`.
 
-When Supabase variables are not configured, local development uses password-based demo login.
+Development and production use the configured Supabase identity provider and database. They fail closed when required configuration is missing.
 
-Demo credentials:
-
-- ZQX admin: `gvcotto@zqxconsulting.com` / `ZQXdemo2026!`
-- Client admin: `admin@dentalsmile.example` / `DemoDental2026!`
+Local password authentication is available only in explicit `ZQX_RUNTIME_MODE=demo` with `NODE_ENV` other than `production`. Demo credentials and a 32+ character session secret must be supplied through uncommitted environment variables; the repository contains no default credentials.
 
 ## Environment
 
@@ -31,7 +28,7 @@ NEXT_PUBLIC_SITE_URL="https://system.zqxconsulting.com"
 NEXT_PUBLIC_SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY"
 NEXT_PUBLIC_GOOGLE_HOSTED_DOMAIN=""
-ZQX_DATA_BACKEND="memory"
+ZQX_RUNTIME_MODE="development"
 ZQX_SYSTEM_OWNER_EMAIL="gvcotto@zqxconsulting.com"
 ```
 
@@ -42,7 +39,7 @@ Supabase Auth should enable Google as a provider and include these redirect URLs
 
 Google OAuth should be treated as identity only. Access is controlled by system user records and roles:
 
-Email/password can also be enabled through Supabase Auth. In local development without Supabase, the app falls back to signed demo sessions through `/api/auth/password/login`.
+Email/password can also be enabled through Supabase Auth. The local password route is server-side gated and unavailable in production.
 
 - `zqx_owner`: ZQX admin, can switch companies and assign modules.
 - `business_admin`: client admin for one company.
@@ -58,12 +55,8 @@ NEXT_PUBLIC_SITE_URL=https://system.zqxconsulting.com
 NEXT_PUBLIC_SUPABASE_URL=https://<PROJECT_REF>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
 NEXT_PUBLIC_GOOGLE_HOSTED_DOMAIN=
-ZQX_SYSTEM_AUTH_SECRET=<LONG_RANDOM_SECRET>
 ZQX_SYSTEM_OWNER_EMAIL=gvcotto@zqxconsulting.com
-ZQX_SYSTEM_ADMIN_EMAIL=gvcotto@zqxconsulting.com
-ZQX_SYSTEM_ADMIN_PASSWORD=ZQXdemo2026!
-ZQX_SYSTEM_COOKIE_SECURE=true
-ZQX_DATA_BACKEND=memory
+ZQX_RUNTIME_MODE=production
 ```
 
 Auth providers configuration:
@@ -114,7 +107,7 @@ The General Module provides shared CRUD for clients, appointments, follow-ups, s
 - Added the `Structure` dashboard view to separate ZQX administration, client companies, and company operations before users jump into daily workflows.
 - Grouped the sidebar navigation into Governance, Company operations, and Automation.
 - Added portable local tooling documentation under `../zqx_analysis`; system build was validated from a clean non-OneDrive copy because OneDrive caused local webpack read errors.
-- Added the first Supabase CRUD/RLS phase behind `ZQX_DATA_BACKEND=supabase`, with fallback to memory while migration is validated.
+- Historical note: the first Supabase CRUD/RLS phase originally used a backend flag and memory fallback. Phase 1A replaced it with explicit runtime modes and fail-closed production behavior.
 - Added docs for Supabase activation and tutorials for ZQX admins and client-company users.
 
 ### 2026-06-02
