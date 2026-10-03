@@ -673,6 +673,9 @@
   white-space: nowrap;
   font-weight: 500;
 }
+.pq-app .pq-badge-current {
+  color: var(--pq-ink);
+}
 .pq-badge-active,
 .pq-badge-paid,
 .pq-badge-completed,
