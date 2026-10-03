@@ -1,0 +1,3 @@
+# Preserve reviewed migration bytes: the portable ledger hashes file contents.
+supabase/migrations/*.sql -text
+supabase/maintenance/**/*.sql -text

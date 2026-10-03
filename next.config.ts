@@ -14,7 +14,10 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Opt-in only: preserve the existing provider build until a container build is requested.
+  output: process.env.ZQX_OUTPUT === "standalone" ? "standalone" : undefined,
   reactStrictMode: true,
+  devIndicators: false,
   // The system uses plain local <img> assets. Keep the server-side image optimizer disabled
   // until Next.js 15 ships a compatible patched sharp dependency.
   images: { unoptimized: true },

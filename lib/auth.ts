@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSystemUserAccess, type SystemUser } from "@/lib/core/selectors";
 import { getLocalSessionFromCookies } from "@/lib/local-auth";
+import { remotePersistenceAllowed } from "@/lib/infrastructure/adapters/remote-identity-policy";
 
 type AccessReason = "unauthenticated" | "not_found" | "invited" | "disabled";
 
@@ -11,6 +12,8 @@ type AccessResult = {
 };
 
 export async function getCurrentSystemAccess(): Promise<AccessResult> {
+  // Legacy APIs cannot authorize a V2 principal through an email selector.
+  if(remotePersistenceAllowed()) return {user:null,reason:"not_found"};
   const localSession = await getLocalSessionFromCookies();
 
   if (localSession) {

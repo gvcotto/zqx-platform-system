@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const runtimeModeSchema = z.enum(["development", "demo", "test", "production"]);
+const runtimeModeSchema = z.enum(["development", "development-local", "development-remote", "demo", "test", "production"]);
 
 export type RuntimeMode = z.infer<typeof runtimeModeSchema>;
 
@@ -35,7 +35,7 @@ export function getRuntimeConfig(env: NodeJS.ProcessEnv = process.env) {
   if (mode === "demo" && env.NODE_ENV === "production") {
     throw new RuntimeConfigurationError("Demo mode cannot run with NODE_ENV=production.");
   }
-  if ((mode === "production" || mode === "development") && (!supabaseUrl || !supabaseAnonKey)) {
+  if ((mode === "production" || mode === "development" || mode === "development-remote") && (!supabaseUrl || !supabaseAnonKey)) {
     throw new RuntimeConfigurationError(`Supabase configuration is required in ${mode} mode.`);
   }
 

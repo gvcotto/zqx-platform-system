@@ -209,7 +209,7 @@ export default function LoginPage() {
           <div className="border-b border-brand-border p-6 md:p-8 lg:border-b-0 lg:border-r">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <img src="/logos/zqx.svg" alt="ZQX logo" className="h-9 w-24 rounded-md border border-brand-border bg-white p-1 object-contain" />
+                <img src="/logos/zqx.svg" alt="ZQX" width="120" height="60" className="h-[60px] w-[120px] object-contain" />
                 <div className="text-sm font-bold">{t.brand}</div>
               </div>
               <LocaleSwitcher locale={locale} onChange={setLocale} />
