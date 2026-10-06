@@ -2,9 +2,7 @@ import { entities, type Entity, type RecordFilters, type RecordFor, type RecordI
 import { seedRecords } from "@/lib/core/seed";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __zqxSystemStore: Records | undefined;
-  // eslint-disable-next-line no-var
   var __zqxSystemCounter: number | undefined;
 }
 

@@ -2,6 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createRecordAsync, listRecordsAsync, updateRecordAsync } from "@/lib/core/data";
 import { ZQX_BUSINESS_ID, type UserRecord } from "@/lib/core/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSafePostAuthPath } from "@/lib/auth-redirect";
+import { remotePersistenceAllowed } from "@/lib/infrastructure/adapters/remote-identity-policy";
+import { remoteContext } from "@/lib/infrastructure/adapters/remote-identity";
 
 const ownerEmail = (process.env.ZQX_SYSTEM_OWNER_EMAIL ?? "gvcotto@zqxconsulting.com").trim().toLowerCase();
 
@@ -35,8 +38,7 @@ async function provisionSystemUser(email: string, name?: string) {
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const nextParam = requestUrl.searchParams.get("next");
-  const next = nextParam && nextParam.startsWith("/") ? nextParam : "/dashboard";
+  const next = getSafePostAuthPath(requestUrl.searchParams.get("next"));
 
   if (code) {
     const supabase = await createSupabaseServerClient();
@@ -50,10 +52,21 @@ export async function GET(request: NextRequest) {
         } = await supabase.auth.getUser();
 
         if (user?.email) {
-          await provisionSystemUser(user.email, user.user_metadata?.full_name ?? user.user_metadata?.name ?? undefined);
+          if(remotePersistenceAllowed()) {
+            try{await remoteContext();}catch{return NextResponse.redirect(new URL("/login?access=not_found",requestUrl.origin));}
+          }else await provisionSystemUser(user.email, user.user_metadata?.full_name ?? user.user_metadata?.name ?? undefined);
         }
+      } else {
+        const category = error.code && /^[a-z_]{1,64}$/.test(error.code) ? error.code : "unknown";
+        console.error("[zqx-auth] OAuth code exchange failed.", { category, status: error.status });
+        return NextResponse.redirect(new URL("/login?oauth_error=exchange_failed", requestUrl.origin));
       }
+    } else {
+      console.error("[zqx-auth] OAuth callback is missing identity provider configuration.");
+      return NextResponse.redirect(new URL("/login?oauth_error=not_configured", requestUrl.origin));
     }
+  } else {
+    return NextResponse.redirect(new URL("/login?oauth_error=missing_code", requestUrl.origin));
   }
 
   return NextResponse.redirect(new URL(next, requestUrl.origin));

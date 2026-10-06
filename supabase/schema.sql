@@ -30,7 +30,6 @@ create table if not exists public.users (
   name text not null,
   role text not null check (role in ('zqx_owner', 'business_admin', 'operator', 'viewer')),
   status text not null check (status in ('invited', 'active', 'disabled')),
-  temporary_password text,
   auth_source text check (auth_source in ('local', 'google')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

@@ -1,0 +1,41 @@
+begin;
+insert into zqx.users(id,auth_user_id,email,name) values('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','fixture1@example.invalid','Synthetic actor 1');
+insert into zqx.users(id,auth_user_id,email,name) values('10000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000002','fixture2@example.invalid','Synthetic actor 2');
+insert into zqx.users(id,auth_user_id,email,name) values('10000000-0000-0000-0000-000000000003','20000000-0000-0000-0000-000000000003','fixture3@example.invalid','Synthetic actor 3');
+insert into zqx.users(id,auth_user_id,email,name) values('10000000-0000-0000-0000-000000000004','20000000-0000-0000-0000-000000000004','fixture4@example.invalid','Synthetic actor 4');
+insert into zqx.users(id,auth_user_id,email,name) values('10000000-0000-0000-0000-000000000005','20000000-0000-0000-0000-000000000005','fixture5@example.invalid','Synthetic actor 5');
+insert into zqx.users(id,auth_user_id,email,name) values('10000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000006','fixture6@example.invalid','Synthetic actor 6');
+insert into zqx.users(id,auth_user_id,email,name) values('10000000-0000-0000-0000-000000000007','20000000-0000-0000-0000-000000000007','fixture7@example.invalid','Synthetic actor 7');
+insert into zqx.organizations(id,slug,name,contact_email) values('30000000-0000-0000-0000-000000000001','fixture-1','Forma Advisory','org1@example.invalid');
+insert into zqx.organizations(id,slug,name,contact_email) values('30000000-0000-0000-0000-000000000002','fixture-2','Isolation fixture','org2@example.invalid');
+insert into zqx.memberships(id,user_id,organization_id,role,joined_at) values('10000000-0000-0000-0000-000000000101','10000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','org_admin','2026-10-02T00:00:00Z');
+insert into zqx.memberships(id,user_id,organization_id,role,joined_at) values('10000000-0000-0000-0000-000000000102','10000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000001','operator','2026-10-02T00:00:00Z');
+insert into zqx.memberships(id,user_id,organization_id,role,joined_at) values('10000000-0000-0000-0000-000000000103','10000000-0000-0000-0000-000000000003','30000000-0000-0000-0000-000000000001','viewer','2026-10-02T00:00:00Z');
+insert into zqx.memberships(id,user_id,organization_id,role,joined_at) values('10000000-0000-0000-0000-000000000104','10000000-0000-0000-0000-000000000004','30000000-0000-0000-0000-000000000002','org_admin','2026-10-02T00:00:00Z');
+insert into zqx.platform_roles values('10000000-0000-0000-0000-000000000005','zqx_admin');
+insert into zqx.platform_roles values('10000000-0000-0000-0000-000000000006','platform_owner');
+insert into zqx.platform_roles values('10000000-0000-0000-0000-000000000007','support');
+insert into zqx.platform_scopes values('10000000-0000-0000-0000-000000000005','30000000-0000-0000-0000-000000000001',null,'10000000-0000-0000-0000-000000000006','Local assigned administrator');
+insert into zqx.platform_scopes values('10000000-0000-0000-0000-000000000007','30000000-0000-0000-0000-000000000001','2099-01-01','10000000-0000-0000-0000-000000000006','Local temporary support');
+insert into zqx.customers(id,organization_id,name,email,company,notes) values('40000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','Aster Studio','customer1@example.invalid','Synthetic services','Fictional local fixture');
+insert into zqx.customers(id,organization_id,name,email,company,notes) values('40000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000001','Northline Design','customer2@example.invalid','Synthetic services','Fictional local fixture');
+insert into zqx.customers(id,organization_id,name,email,company,notes) values('40000000-0000-0000-0000-000000000003','30000000-0000-0000-0000-000000000002','Private fixture','customer3@example.invalid','Synthetic services','Fictional local fixture');
+insert into zqx.organization_modules(organization_id,module_key,enabled) select '30000000-0000-0000-0000-000000000001',unnest(array['crm','operations','finance']),true;
+insert into zqx.leads(id,organization_id,name,stage,next_action,owner_user_id) values('10000000-0000-0000-0000-000000000201','30000000-0000-0000-0000-000000000001','Beacon Projects','qualified','Review fictional proposal','10000000-0000-0000-0000-000000000002');
+insert into zqx.appointments(id,organization_id,customer_id,title,starts_at,ends_at,status) values('10000000-0000-0000-0000-000000000301','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001','Quarterly strategy review','2026-10-02T09:30Z','2026-10-02T10:30Z','scheduled');
+insert into zqx.tasks(id,organization_id,customer_id,title,due_at,priority,status,assigned_user_id) values('10000000-0000-0000-0000-000000000401','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001','Send updated strategy proposal','2026-10-02','high','open','10000000-0000-0000-0000-000000000002');
+insert into zqx.invoices(id,organization_id,customer_id,subtotal,total,status,due_at,issued_at) values('10000000-0000-0000-0000-000000000501','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',450000,450000,'pending','2026-10-10','2026-10-02');
+insert into zqx.payments(id,organization_id,invoice_id,customer_id,amount,currency,method,paid_at) values('10000000-0000-0000-0000-000000000601','30000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000501','40000000-0000-0000-0000-000000000001',100000,'USD','bank_transfer','2026-10-02');
+-- Fixed seed timestamps make rebuilt fixtures byte-reproducible. Migrator only.
+update zqx.users set created_at='2026-10-02T00:00:00Z';
+update zqx.organizations set created_at='2026-10-02T00:00:00Z';
+update zqx.memberships set created_at='2026-10-02T00:00:00Z';
+update zqx.organization_modules set created_at='2026-10-02T00:00:00Z';
+update zqx.customers set created_at='2026-10-02T00:00:00Z';
+update zqx.leads set created_at='2026-10-02T00:00:00Z';
+update zqx.appointments set created_at='2026-10-02T00:00:00Z';
+update zqx.tasks set created_at='2026-10-02T00:00:00Z';
+update zqx.invoices set created_at='2026-10-02T00:00:00Z';
+-- Updating timestamp columns is unnecessary for normalized domain-state proof.
+commit;
+

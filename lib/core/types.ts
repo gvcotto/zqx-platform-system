@@ -46,7 +46,6 @@ export type UserRecord = BaseRecord & {
   name: string;
   role: UserRole;
   status: "invited" | "active" | "disabled";
-  temporary_password?: string;
   auth_source?: "local" | "google";
 };
 

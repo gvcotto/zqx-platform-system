@@ -1,0 +1,35 @@
+name: CI checks
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    # Standard Linux runner only. No deployment steps, environments or secrets.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      ZQX_RUNTIME_MODE: production
+      ZQX_OUTPUT: standalone
+      NEXT_PUBLIC_SITE_URL: http://localhost:3007
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:9
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: portable-public-placeholder
+      NEXT_PUBLIC_PLATFORM_SYSTEM_URL: http://localhost:3007
+      ZQX_SYSTEM_OWNER_EMAIL: owner@example.invalid
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - run: npm audit --omit=dev

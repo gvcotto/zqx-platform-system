@@ -1,4 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DataBackendError, type DataOperation } from "@/lib/core/errors";
+import { getRuntimeConfig } from "@/lib/runtime-config";
+import { stripSensitiveFields } from "@/lib/security/sanitize";
 import {
   createRecord as createMemoryRecord,
   deleteRecord as deleteMemoryRecord,
@@ -12,10 +15,6 @@ const numericFields: Partial<Record<Entity, string[]>> = {
   services: ["price", "duration_minutes"],
   payments: ["amount", "amount_paid"],
 };
-
-function useSupabaseBackend() {
-  return process.env.ZQX_DATA_BACKEND === "supabase";
-}
 
 function normalizeValue(value: unknown) {
   return String(value ?? "").trim().toLowerCase();
@@ -45,16 +44,18 @@ function normalizeRecord<E extends Entity>(entity: E, record: Record<string, unk
     }
   }
 
-  return normalized as RecordFor<E>;
+  return stripSensitiveFields(normalized) as RecordFor<E>;
 }
 
 function newId(entity: Entity) {
   return `${entity.slice(0, 4)}-${globalThis.crypto.randomUUID()}`;
 }
 
-async function getSupabaseDataClient() {
-  if (!useSupabaseBackend()) return null;
-  return createSupabaseServerClient();
+async function getSupabaseDataClient(operation: DataOperation, entity: Entity) {
+  if (getRuntimeConfig().usesMemoryData) return null;
+  const client = await createSupabaseServerClient();
+  if (!client) throw new DataBackendError(operation, entity);
+  return client;
 }
 
 function scopedFallback<E extends Entity>(entity: E, filters?: RecordFilters<E>) {
@@ -62,7 +63,7 @@ function scopedFallback<E extends Entity>(entity: E, filters?: RecordFilters<E>)
 }
 
 export async function listRecordsAsync<E extends Entity>(entity: E, filters?: RecordFilters<E>) {
-  const supabase = await getSupabaseDataClient();
+  const supabase = await getSupabaseDataClient("list", entity);
 
   if (!supabase) return scopedFallback(entity, filters);
 
@@ -81,14 +82,14 @@ export async function listRecordsAsync<E extends Entity>(entity: E, filters?: Re
 
   if (error) {
     console.error(`[zqx-data] Supabase list failed for ${entity}:`, error.message);
-    return scopedFallback(entity, filters);
+    throw new DataBackendError("list", entity, { cause: error });
   }
 
   return (data ?? []).map((record) => normalizeRecord(entity, record)).filter((record) => matches(record, filters));
 }
 
 export async function getRecordAsync<E extends Entity>(entity: E, id: string) {
-  const supabase = await getSupabaseDataClient();
+  const supabase = await getSupabaseDataClient("get", entity);
 
   if (!supabase) return getMemoryRecord(entity, id);
 
@@ -96,14 +97,14 @@ export async function getRecordAsync<E extends Entity>(entity: E, id: string) {
 
   if (error) {
     console.error(`[zqx-data] Supabase get failed for ${entity}/${id}:`, error.message);
-    return getMemoryRecord(entity, id);
+    throw new DataBackendError("get", entity, { cause: error });
   }
 
   return data ? normalizeRecord(entity, data) : null;
 }
 
 export async function createRecordAsync<E extends Entity>(entity: E, data: RecordInput<E>) {
-  const supabase = await getSupabaseDataClient();
+  const supabase = await getSupabaseDataClient("create", entity);
 
   if (!supabase) return createMemoryRecord(entity, data);
 
@@ -118,14 +119,14 @@ export async function createRecordAsync<E extends Entity>(entity: E, data: Recor
 
   if (error) {
     console.error(`[zqx-data] Supabase create failed for ${entity}:`, error.message);
-    return createMemoryRecord(entity, data);
+    throw new DataBackendError("create", entity, { cause: error });
   }
 
   return normalizeRecord(entity, created);
 }
 
 export async function updateRecordAsync<E extends Entity>(entity: E, id: string, data: RecordUpdate<E>) {
-  const supabase = await getSupabaseDataClient();
+  const supabase = await getSupabaseDataClient("update", entity);
 
   if (!supabase) return updateMemoryRecord(entity, id, data);
 
@@ -134,14 +135,14 @@ export async function updateRecordAsync<E extends Entity>(entity: E, id: string,
 
   if (error) {
     console.error(`[zqx-data] Supabase update failed for ${entity}/${id}:`, error.message);
-    return updateMemoryRecord(entity, id, data);
+    throw new DataBackendError("update", entity, { cause: error });
   }
 
   return updated ? normalizeRecord(entity, updated) : null;
 }
 
 export async function deleteRecordAsync<E extends Entity>(entity: E, id: string) {
-  const supabase = await getSupabaseDataClient();
+  const supabase = await getSupabaseDataClient("delete", entity);
 
   if (!supabase) return deleteMemoryRecord(entity, id);
 
@@ -149,7 +150,7 @@ export async function deleteRecordAsync<E extends Entity>(entity: E, id: string)
 
   if (error) {
     console.error(`[zqx-data] Supabase delete failed for ${entity}/${id}:`, error.message);
-    return deleteMemoryRecord(entity, id);
+    throw new DataBackendError("delete", entity, { cause: error });
   }
 
   return true;

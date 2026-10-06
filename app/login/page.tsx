@@ -188,6 +188,8 @@ export default function LoginPage() {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const access = params.get("access");
+    const oauthFailure = params.get("oauth_error");
+    if (oauthFailure) setOauthError(oauthFailure.replaceAll("_", " "));
     if (access === "invited" || access === "disabled" || access === "not_found") {
       setAccessCode(access);
       return;
@@ -207,7 +209,7 @@ export default function LoginPage() {
           <div className="border-b border-brand-border p-6 md:p-8 lg:border-b-0 lg:border-r">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <img src="/logos/zqx.svg" alt="ZQX logo" className="h-9 w-24 rounded-md border border-brand-border bg-white p-1 object-contain" />
+                <img src="/logos/zqx.svg" alt="ZQX" width="120" height="60" className="h-[60px] w-[120px] object-contain" />
                 <div className="text-sm font-bold">{t.brand}</div>
               </div>
               <LocaleSwitcher locale={locale} onChange={setLocale} />

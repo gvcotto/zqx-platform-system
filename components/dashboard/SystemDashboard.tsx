@@ -298,7 +298,7 @@ function statusClass(status: string) {
 function userAuthSource(user: UserRecord) {
   if (user.auth_source === "google") return "google";
   if (user.auth_source === "local") return "local";
-  return user.temporary_password ? "local" : "google";
+  return "google";
 }
 
 function defaultLocation(industry: BusinessIndustry, locale: Locale) {
@@ -437,7 +437,6 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
     name: "",
     role: "operator" as UserRecord["role"],
     businessId: snapshot.activeBusiness.id,
-    temporaryPassword: "",
   });
   const [userAccessDrafts, setUserAccessDrafts] = useState<Record<string, UserAccessDraft>>({});
   const [userAccessMessage, setUserAccessMessage] = useState("");
@@ -564,9 +563,9 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
 
   const selectedClient = clients.find((client) => client.id === selectedClientId) ?? sortedClients[0] ?? clients[0];
   const editingAppointment = appointments.find((appointment) => appointment.id === editingAppointmentId);
-  const selectedClientAppointments = selectedClient ? appointments.filter((appointment) => appointment.client_id === selectedClient.id) : [];
-  const selectedClientPayments = selectedClient ? payments.filter((payment) => payment.client_id === selectedClient.id) : [];
-  const selectedClientFollowups = selectedClient ? followups.filter((followup) => followup.client_id === selectedClient.id) : [];
+  const selectedClientAppointments = useMemo(() => selectedClient ? appointments.filter((appointment) => appointment.client_id === selectedClient.id) : [], [appointments, selectedClient]);
+  const selectedClientPayments = useMemo(() => selectedClient ? payments.filter((payment) => payment.client_id === selectedClient.id) : [], [payments, selectedClient]);
+  const selectedClientFollowups = useMemo(() => selectedClient ? followups.filter((followup) => followup.client_id === selectedClient.id) : [], [followups, selectedClient]);
   const selectedClientAppointmentsSorted = useMemo(
     () => [...selectedClientAppointments].sort((left, right) => new Date(right.scheduled_at).getTime() - new Date(left.scheduled_at).getTime()),
     [selectedClientAppointments],
@@ -900,14 +899,14 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
       if (generalModuleId) selectedModuleIds.add(generalModuleId);
       const createdBusinessModules: BusinessModuleRecord[] = [];
 
-      for (const module of snapshot.modules) {
-        if (!selectedModuleIds.has(module.id)) continue;
+      for (const moduleRecord of snapshot.modules) {
+        if (!selectedModuleIds.has(moduleRecord.id)) continue;
         const moduleResponse = await fetch("/api/records/business_modules", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             business_id: data.record.id,
-            module_id: module.id,
+            module_id: moduleRecord.id,
             enabled: true,
             configuration: {},
           }),
@@ -962,16 +961,15 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
           email: newUser.email.trim().toLowerCase(),
           name: newUser.name.trim() || newUser.email.trim(),
           role: newUser.role,
-          status: newUser.temporaryPassword.trim() ? "active" : "invited",
-          temporary_password: newUser.temporaryPassword.trim() || undefined,
-          auth_source: "local",
+          status: "invited",
+          auth_source: "google",
         }),
       });
       const data = (await response.json()) as { record?: UserRecord };
 
       if (response.ok && data.record) {
         setUsers((current) => [...current, data.record as UserRecord]);
-        setNewUser({ email: "", name: "", role: "operator", businessId: snapshot.activeBusiness.id, temporaryPassword: "" });
+        setNewUser({ email: "", name: "", role: "operator", businessId: snapshot.activeBusiness.id });
         setUserAccessMessage(locale === "es" ? "Usuario creado." : "User created.");
       }
     } finally {
@@ -3200,13 +3198,6 @@ export default function SystemDashboard({ snapshot }: DashboardProps) {
                           <option value="viewer">{locale === "es" ? "Lectura" : "Viewer"}</option>
                         </select>
                       </div>
-                      <input
-                        value={newUser.temporaryPassword}
-                        onChange={(event) => setNewUser((current) => ({ ...current, temporaryPassword: event.target.value }))}
-                        placeholder={locale === "es" ? "Contraseña inicial" : "Initial password"}
-                        type="password"
-                        className="focus-ring rounded-md border border-brand-border bg-white px-3 py-2 text-sm"
-                      />
                       <button type="submit" disabled={isBusy} className="focus-ring rounded-md bg-brand-charcoal px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                         {locale === "es" ? "Crear usuario" : "Create user"}
                       </button>
