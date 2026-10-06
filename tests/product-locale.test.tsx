@@ -7,6 +7,7 @@ import {emptyStore} from '@/lib/demo/model';
 describe('EN/ES product presentation',()=>{
  it('translates labels without changing English keys',()=>{expect(translateProduct('Customers','es')).toBe('Clientes');expect(translateProduct('Customers','en')).toBe('Customers');});
  it('never translates fictional/customer free text',()=>expect(translateProduct('Fictional business name','es')).toBe('Fictional business name'));
+ it('translates the empty follow-up label but preserves task titles',()=>{expect(translateProduct('No open tasks','es')).toBe('Sin tareas pendientes');expect(translateProduct('Synthetic follow-up','es')).toBe('Synthetic follow-up');});
  it('renders Spanish heading, tabs and state preserving action keys',()=>{
  const html=renderToStaticMarkup(<ProductLocaleProvider initialLocale="es"><PageHeader title="Tasks" subtitle="The next step, without the noise."/><Tabs values={['Open','Completed']} active="Open" onChange={()=>{}}/><StatusBadge status="Partial"/></ProductLocaleProvider>);
  expect(html).toContain('Tareas');expect(html).toContain('Pendiente');expect(html).toContain('Parcial');expect(html).toContain('pq-badge-partial');expect(html).toContain('aria-pressed="true"');

@@ -411,7 +411,7 @@ function ModernWorkspaceContent({
                   <StatusBadge status={c.status} key="status" />,
                   store.tasks.find(
                     (t) => t.customerId === c.id && t.status === "Open",
-                  )?.title || "No open tasks",
+                  )?.title || t("No open tasks"),
                 ],
               }))}
             />
